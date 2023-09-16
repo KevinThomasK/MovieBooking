@@ -91,3 +91,31 @@ export const deleteUser = async (req, res, next) => {
   }
   res.status(200).json({ message: "Deleted successfully" });
 };
+
+export const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email && email.trim() === "" && !password && password.trim() === "") {
+    return res.status(422).json({ message: "Invalid input data" });
+  }
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (error) {
+    return console.log(error);
+  }
+
+  if (!existingUser) {
+    return res
+      .status(404)
+      .json({ message: "Unable to find user from this Id" });
+  }
+
+  const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
+
+  if (!isPasswordCorrect) {
+    return res.status(400).json({ message: "password incorrect" });
+  }
+
+  return res.status(200).json({ message: "login successfull" });
+};
