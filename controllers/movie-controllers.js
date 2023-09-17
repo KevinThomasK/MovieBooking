@@ -42,7 +42,7 @@ export const addMovie = async (req, res, next) => {
       featured,
       actors,
       admin: adminId,
-      posterUrl
+      posterUrl,
     });
     movie = await movie.save();
   } catch (error) {
@@ -55,3 +55,37 @@ export const addMovie = async (req, res, next) => {
 
   return res.status(201).json({ movie });
 };
+
+export const getMovies = async (req, res, next) => {
+  let movies;
+  try {
+    movies = await Movie.find();
+  } catch (error) {
+    return console.log(error);
+  }
+
+  if (!movies) {
+    res.status(500).json({ message: "request failed" });
+  }
+
+  return res.status(200).json({ movies });
+};
+
+
+
+export const getMovieById = async (req,res,next) =>{
+    const id = req.params.id;
+    let movie;
+    try {
+        movie = await Movie.findById(id)
+
+    } catch (error) {
+        return console.log(error)
+    }
+
+    if(!movie){
+        res.status(404).json({ message: "invalid movie id" });
+    }
+
+    return res.status(200).json({ movie });
+}
