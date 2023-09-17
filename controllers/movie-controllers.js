@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
 import Movie from "../models/Movie.js";
+import mongoose from "mongoose";
+import Admin from "../models/Admin.js";
 
 export const addMovie = async (req, res, next) => {
   const extractedToken = req.headers.authorization.split(" ")[1];
@@ -44,7 +46,16 @@ export const addMovie = async (req, res, next) => {
       admin: adminId,
       posterUrl,
     });
-    movie = await movie.save();
+
+    const session = await mongoose.startSession();
+    const adminUser = await Admin.findById(adminId);
+    session.startTransaction();
+
+    await movie.save({ session });
+    adminUser.addedMovies.push(movie);
+    await adminUser.save({ session });
+    await session.commitTransaction();
+
   } catch (error) {
     return console.log(error);
   }
@@ -71,21 +82,18 @@ export const getMovies = async (req, res, next) => {
   return res.status(200).json({ movies });
 };
 
+export const getMovieById = async (req, res, next) => {
+  const id = req.params.id;
+  let movie;
+  try {
+    movie = await Movie.findById(id);
+  } catch (error) {
+    return console.log(error);
+  }
 
+  if (!movie) {
+    res.status(404).json({ message: "invalid movie id" });
+  }
 
-export const getMovieById = async (req,res,next) =>{
-    const id = req.params.id;
-    let movie;
-    try {
-        movie = await Movie.findById(id)
-
-    } catch (error) {
-        return console.log(error)
-    }
-
-    if(!movie){
-        res.status(404).json({ message: "invalid movie id" });
-    }
-
-    return res.status(200).json({ movie });
-}
+  return res.status(200).json({ movie });
+};
